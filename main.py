@@ -13,12 +13,8 @@ from sklearn.decomposition import TruncatedSVD
 from sklearn.manifold import TSNE
 import plotly.express as px
 from concurrent.futures import ProcessPoolExecutor
+from joblib import Parallel, delayed
 import pandas as pd
-
-# Example initialization for debugging purposes
-data = [{"filename": "example.html", "title": "Example", "text": "Example text", "tag_sequence": ["div", "p"]}]
-df = pd.DataFrame(data)
-df.to_csv("debug_features.csv", index=False)
 
 logging.basicConfig(level=logging.INFO)
 
@@ -52,8 +48,22 @@ def jaccard_similarity(seq1, seq2):
         return 1.0
     return len(set1 & set2) / len(set1 | set2)
 
+def compute_struct_sim(structures):
+    n = len(structures)
+    struct_sim = np.zeros((n, n))
+    def compute_row(i):
+        for j in range(i + 1, n):
+            sim = jaccard_similarity(structures[i], structures[j])
+            struct_sim[i][j] = sim
+            struct_sim[j][i] = sim
+    Parallel(n_jobs=-1)(delayed(compute_row)(i) for i in range(n))
+    return struct_sim
+
 def visualize_clusters(distance_matrix, labels, filenames=None):
     n_samples = distance_matrix.shape[0]
+    if n_samples < 3:
+        logging.info("Not enough samples for t-SNE visualization.")
+        return
     perplexity = min(30, n_samples - 1)
     tsne = TSNE(n_components=2, metric="precomputed", init='random', random_state=42, perplexity=perplexity)
     coords = tsne.fit_transform(distance_matrix)
@@ -71,17 +81,21 @@ def visualize_clusters(distance_matrix, labels, filenames=None):
     fig.update_layout(legend_title_text='Cluster', height=600)
     fig.show()
 
-def process_folder(input_pattern, output_filename, alpha=0.7, beta=0.3, distance_threshold=0.3):
+def process_folder(input_pattern, output_filename, alpha=0.7, beta=0.3, distance_threshold=0.75):
     files = glob.glob(input_pattern)
     if not files:
         logging.warning("[!] No files found in: %s", input_pattern)
         return
 
-    logging.info("✓ [%s] %d files found. Starting processing...", output_filename, len(files))
+    logging.info("\u2713 [%s] %d files found. Starting processing...", output_filename, len(files))
 
     t0 = time.time()
     data = parallel_extract_html_features(files)
-    logging.info("✓ HTML parsed in %.2f seconds", time.time() - t0)
+    logging.info("\u2713 HTML parsed in %.2f seconds", time.time() - t0)
+
+    # Export debug data for inspection
+    pd.DataFrame(data).to_csv("debug_features.csv", index=False)
+    logging.info("\u2713 Debug CSV saved as debug_features.csv")
 
     titles = [d['title'] for d in data]
     texts = [d['text'] for d in data]
@@ -97,22 +111,16 @@ def process_folder(input_pattern, output_filename, alpha=0.7, beta=0.3, distance
     svd = TruncatedSVD(n_components=100, random_state=42)
     reduced_matrix = svd.fit_transform(tfidf_matrix)
     text_sim = cosine_similarity(reduced_matrix)
-    logging.info("✓ TF-IDF + SVD + cosine similarity in %.2f seconds", time.time() - t1)
+    logging.info("\u2713 TF-IDF + SVD + cosine similarity in %.2f seconds", time.time() - t1)
 
     t2 = time.time()
-    n = len(structures)
-    struct_sim = np.zeros((n, n))
-    for i in range(n):
-        struct_sim[i][i] = 1.0
-        for j in range(i + 1, n):
-            sim = jaccard_similarity(structures[i], structures[j])
-            struct_sim[i][j] = sim
-            struct_sim[j][i] = sim
-    logging.info("✓ Structural similarity computed in %.2f seconds", time.time() - t2)
+    struct_sim = compute_struct_sim(structures)
+    logging.info("\u2713 Structural similarity computed in %.2f seconds", time.time() - t2)
 
+    # Adjust combined similarity to avoid excessive separation
     combined_sim = alpha * text_sim + beta * struct_sim
+    combined_sim = np.clip(combined_sim, 0, 1)  # Ensure values are within [0, 1]
     distance_matrix = 1 - combined_sim
-    distance_matrix = np.clip(distance_matrix, 0, 1)
 
     t3 = time.time()
     clustering = AgglomerativeClustering(
@@ -122,7 +130,7 @@ def process_folder(input_pattern, output_filename, alpha=0.7, beta=0.3, distance
         n_clusters=None
     )
     labels = clustering.fit_predict(distance_matrix)
-    logging.info("✓ Clustering done in %.2f seconds", time.time() - t3)
+    logging.info("\u2713 Clustering done in %.2f seconds", time.time() - t3)
 
     clusters = defaultdict(list)
     for label, fname in zip(labels, filenames):
@@ -137,10 +145,9 @@ def process_folder(input_pattern, output_filename, alpha=0.7, beta=0.3, distance
     json_output = output_filename.replace(".py", ".json")
     with open(json_output, "w", encoding="utf-8") as jf:
         json.dump(grouped_files, jf, indent=2, ensure_ascii=False)
-    logging.info("[✓] Results saved to: %s and %s", output_filename, json_output)
+    logging.info("[\u2713] Results saved to: %s and %s", output_filename, json_output)
 
     visualize_clusters(distance_matrix, labels, filenames)
-
 
 if __name__ == '__main__':
     base_path = "C:/Users/Tudor/Downloads/clones 2/clones"
@@ -150,4 +157,4 @@ if __name__ == '__main__':
             pattern = os.path.join(folder_path, "*.html")
             output_file = f"grouped_{subfolder}.py"
             process_folder(pattern, output_file)
-            logging.info("[✓] Finished folder: %s", folder_path)
+            logging.info("Finished folder: %s", folder_path)
