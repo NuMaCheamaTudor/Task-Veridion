@@ -13,8 +13,62 @@ Clustering: Implements Agglomerative Clustering to group similar HTML documents 
 Visualization: Generates interactive 2D scatter plots using t-SNE and Plotly to visualize the clustering results.​
 
 Parallel Processing: Incorporates multiprocessing to expedite the processing of large datasets.
+Key Functionalities
+1. Accurate HTML Content Extraction
+The script uses BeautifulSoup with the lxml parser to extract relevant content from each HTML file. It:
 
-Development Process & Decision Rationale Stage 1 — Initialization and Testing (April 13) Commit: Uploading The project and the first results
+Retrieves the document title.
+
+Removes irrelevant tags such as script, style, and noscript.
+
+Captures a meaningful sequence of tags (div, p, img, a, etc.).
+
+Normalizes the extracted text and converts the title to lowercase.
+
+ Clean, robust, and structured data extraction.
+
+2. Parallel Feature Extraction
+To boost performance, the script leverages ProcessPoolExecutor for parallel processing of HTML files. It:
+
+Uses a safe multiprocessing pattern (if __name__ == '__main__'), which is essential for compatibility with Windows.
+
+Filters out corrupted or unreadable files (returns None on failure).
+
+ Real speedup for processing dozens or hundreds of files in parallel.
+
+3. Dual Similarity Computation
+The system combines textual and structural analysis to assess similarity between files:
+
+Textual similarity is based on TF-IDF, followed by SVD (dimensionality reduction), then cosine similarity.
+
+Structural similarity is computed via the Jaccard index on HTML tag sequences, optimized with joblib.Parallel.
+
+ Combining content and structure leads to more accurate and meaningful clustering.
+
+4. Flexible and Interpretable Clustering
+It applies Agglomerative Clustering with a distance threshold, without forcing a fixed number of clusters. You can configure:
+
+alpha – weight of textual similarity.
+
+beta – weight of structural similarity.
+
+distance_threshold – controls granularity of clustering.
+
+ Ideal for exploratory analysis and adaptable to various use cases.
+
+5. Debug-Friendly Output and Visualization
+The tool generates outputs in multiple formats for easy inspection:
+
+Saves clusters as Python (.py) and JSON (.json) files.
+
+Exports a CSV (debug_features.csv) with parsed HTML features.
+
+Displays an interactive 2D visualization using Plotly + t-SNE, if there are at least 3 samples.
+
+ Ready for both visual exploration and in-depth debugging.
+
+Development Process & Decision Rationale 
+Stage 1 — Initialization and Testing (April 13) Commit: Uploading The project and the first results
 
 Goal: Kickstart the project with a functional initial version for processing HTML files.
 
