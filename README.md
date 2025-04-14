@@ -72,4 +72,4 @@
 ---
 
 
-This solution is designed to be robust, scalable, and explainable. It focuses not just on clustering, but on *why* the clusters form, and how to interpret them meaningfully.
+This solution is designed to be robust, scalable, and explainable. 
