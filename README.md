@@ -1,109 +1,75 @@
-A Python-based tool designed to process and cluster HTML files by analyzing their textual content and structural elements. It leverages natural language processing and machine learning techniques to group similar HTML documents, facilitating tasks such as template detection, duplicate identification, and content analysis.​
 
-Features HTML Parsing: Utilizes BeautifulSoup to extract titles, visible text, and tag sequences from HTML files.​
 
-Text Vectorization: Applies TF-IDF to convert textual data into numerical vectors, capturing the importance of words across documents.​
+## Features
 
-Dimensionality Reduction: Employs Truncated SVD to reduce the dimensionality of TF-IDF vectors, enhancing computational efficiency.​
+### 1. HTML Parsing
+- Uses **BeautifulSoup** with the `lxml` parser to extract:
+  - Page titles
+  - Clean visible text (excluding script, style, noscript)
+  - Sequences of structural tags (`div`, `p`, `img`, `a`, etc.)
+- Ensures normalization through lowercasing and whitespace cleanup.
 
-Structural Similarity: Calculates Jaccard similarity between tag sequences to assess structural resemblance between HTML files.​
+### 2. Text Vectorization
+- Applies **TF-IDF** to convert content into weighted numerical vectors.
+- Captures contextual relevance of words across the dataset.
 
-Clustering: Implements Agglomerative Clustering to group similar HTML documents based on combined textual and structural similarities.​
+### 3. Dimensionality Reduction
+- Uses **Truncated SVD** to reduce TF-IDF vectors.
+- Enhances efficiency without compromising clustering accuracy.
 
-Visualization: Generates interactive 2D scatter plots using t-SNE and Plotly to visualize the clustering results.​
+### 4. Structural Similarity
+- Computes **Jaccard similarity** between HTML tag sequences.
+- Reflects page layout and DOM resemblance.
 
-Parallel Processing: Incorporates multiprocessing to expedite the processing of large datasets.
-Key Functionalities
-1. Accurate HTML Content Extraction
-The script uses BeautifulSoup with the lxml parser to extract relevant content from each HTML file. It:
+### 5. Combined Clustering
+- Combines both text and structure similarity using a weighted model:
+  - `alpha`: weight of textual similarity
+  - `beta`: weight of structural similarity
+- Uses **Agglomerative Clustering** with configurable `distance_threshold`.
 
-Retrieves the document title.
+### 6. Visualization and Debug
+- Produces interactive **2D t-SNE plots** using Plotly (if enough samples exist).
+- Outputs groupings as:
+  - `grouped_<tier>.py`
+  - `grouped_<tier>.json`
+- Generates `debug_features.csv` for transparent inspection.
 
-Removes irrelevant tags such as script, style, and noscript.
+### 7. Performance Optimization
+- Uses **ProcessPoolExecutor** and **joblib.Parallel** for parallelism.
+- Compatible with Windows through `if __name__ == '__main__'` guard.
 
-Captures a meaningful sequence of tags (div, p, img, a, etc.).
+---
 
-Normalizes the extracted text and converts the title to lowercase.
+## Development Process and Decision Rationale
 
- Clean, robust, and structured data extraction.
+### Stage 1 — Initialization and Testing (April 13)
+**Commit**: Uploading the project and the first results
 
-2. Parallel Feature Extraction
-To boost performance, the script leverages ProcessPoolExecutor for parallel processing of HTML files. It:
+- Extracted titles, text, TF-IDF vectors
+- Calculated cosine similarity
+- Ran basic clustering
 
-Uses a safe multiprocessing pattern (if __name__ == '__main__'), which is essential for compatibility with Windows.
+**Limitations:**
+- Sequential processing (slow)
+- Basic visualizations
+- Minimal logging
 
-Filters out corrupted or unreadable files (returns None on failure).
+### Stage 2 — Interactivity and Visual Output (April 13)
+**Commit**: Modifying the plots, adding interactive graphs and some test outputs
 
- Real speedup for processing dozens or hundreds of files in parallel.
+- Introduced Plotly-based interactive plots
+- Validated HTML distribution in vector space visually
 
-3. Dual Similarity Computation
-The system combines textual and structural analysis to assess similarity between files:
+### Stage 3 — Optimization and Scaling (April 14)
+**Commit**: Making the plots interactive, adding parallel processing for more efficient management and other things to optimize and scale the code even further
 
-Textual similarity is based on TF-IDF, followed by SVD (dimensionality reduction), then cosine similarity.
+- Parallelized HTML parsing (via `ProcessPoolExecutor`)
+- Added detailed logging and runtime tracking
+- Introduced Jaccard similarity for structural comparison
+- Fine-tuned `alpha`, `beta`, and `distance_threshold`
+- Ensured stable execution across all dataset tiers
 
-Structural similarity is computed via the Jaccard index on HTML tag sequences, optimized with joblib.Parallel.
+---
 
- Combining content and structure leads to more accurate and meaningful clustering.
 
-4. Flexible and Interpretable Clustering
-It applies Agglomerative Clustering with a distance threshold, without forcing a fixed number of clusters. You can configure:
-
-alpha – weight of textual similarity.
-
-beta – weight of structural similarity.
-
-distance_threshold – controls granularity of clustering.
-
- Ideal for exploratory analysis and adaptable to various use cases.
-
-5. Debug-Friendly Output and Visualization
-The tool generates outputs in multiple formats for easy inspection:
-
-Saves clusters as Python (.py) and JSON (.json) files.
-
-Exports a CSV (debug_features.csv) with parsed HTML features for human debugging.
-
-Displays an interactive 2D visualization using Plotly + t-SNE, if there are at least 3 samples.
-
- Ready for both visual exploration and in-depth debugging.
-
-Development Process & Decision Rationale 
-Stage 1 — Initialization and Testing (April 13) Commit: Uploading The project and the first results
-
-Goal: Kickstart the project with a functional initial version for processing HTML files.
-
-What the code did: Extracted titles and text, created TF-IDF vectors, computed similarity, and applied clustering.
-
-Limitations:
-
-Sequential processing (slow for large volumes).
-
-Static and basic visualizations.
-
-Lack of detailed logging.
-
-Stage 2 — Interactivity and Visual Output (April 13) Commit: Modifying the plots, adding interactive graphs and some test outputs
-
-Motivation: The need for better visualization and interpretation of the resulting clusters.
-
-Changes made:
-
-Added an interactive plot (likely using Plotly).
-
-Initial testing to display the distribution of HTML files in vector space.
-
-Stage 3 — Optimization and Scaling (April 14) Commit: Making the plots interractive, adding parallel processing for more efficient management nad other things to oprimize and scale the code even further
-
-Motivation: Significantly improve execution speed and clarity of the results.
-
-Improvements:
-
-Added ProcessPoolExecutor to parallelize HTML data extraction.
-
-Integrated interactive and scalable t-SNE visualization using Plotly.
-
-Added more detailed logging + execution time tracking per processing stage.
-
-Combined text similarity (cosine) with structural similarity (Jaccard).
-
-Ensured compatibility and safe execution on Windows (if name == 'main').
+This solution is designed to be robust, scalable, and explainable. It focuses not just on clustering, but on *why* the clusters form, and how to interpret them meaningfully.
