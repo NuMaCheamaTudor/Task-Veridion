@@ -1,4 +1,15 @@
+##Overview
+This project addresses the problem of detecting and grouping HTML documents that are visually or structurally similar from a user's perspective in a web browser. The goal was to find a scalable and flexible way to compare and cluster such documents without relying on hardcoded heuristics.
 
+The approach is based on two complementary dimensions:
+
+Textual content, captured through TF-IDF and semantic similarity.
+
+Structural layout, modeled using HTML tag sequences and Jaccard similarity.
+
+Instead of guessing a fixed number of clusters, the algorithm uses a configurable distance threshold to group documents based on their actual closeness in meaning and structure. The solution was developed iteratively, starting from a simple one and evolving into a parallelized, complex system capable of handling the increasing complexity of all dataset tiers.
+
+Each design choice (TF-IDF, Jaccard, SVD, AgglomerativeClustering) was made based on interpretability, performance, and scalability, ensuring the system remains robust even when datasets grow or change structure.
 
 ## Features
 
