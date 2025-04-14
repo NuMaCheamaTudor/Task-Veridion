@@ -1,4 +1,4 @@
-##Overview
+## Overview
 This project addresses the problem of detecting and grouping HTML documents that are visually or structurally similar from a user's perspective in a web browser. The goal was to find a scalable and flexible way to compare and cluster such documents without relying on hardcoded heuristics.
 
 The approach is based on two complementary dimensions:
