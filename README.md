@@ -61,7 +61,7 @@ The tool generates outputs in multiple formats for easy inspection:
 
 Saves clusters as Python (.py) and JSON (.json) files.
 
-Exports a CSV (debug_features.csv) with parsed HTML features.
+Exports a CSV (debug_features.csv) with parsed HTML features for human debugging.
 
 Displays an interactive 2D visualization using Plotly + t-SNE, if there are at least 3 samples.
 
